@@ -8,6 +8,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
@@ -56,23 +57,12 @@ func main() {
 	strUrl = strings.TrimRight(strUrl, "&")
 	fmt.Println(strUrl)
 
-	// client := &http.Client{}
-	// req, err := http.NewRequest("GET", strUrl, nil)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// req.Host = "http://web-proxy.rose.hp.com:8080"
-	// resp, err := client.Do(req)
-	//resp, err := http.Get(strUrl)
-	tr := &http.Transport{
-		TLSClientConfig:    &tls.Config{RootCAs: pool},
-		DisableCompression: true,
-	}
-	client := &http.Client{Transport: tr}
-	resp, err := client.Get("https://example.com")
+	resp, err := http.Get(strUrl)
 	if err != nil {
-		log.Fatal("err")
-	} else {
-		fmt.Println(resp)
+		log.Fatal(err)
+		return
 	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	fmt.Println(body)
 }
