@@ -32,13 +32,30 @@ const BASEURL string = "http://translate.google.cn/translate_a/t?"
 
 type parameters map[string]string
 
-var paraKeys = []string{"client", "text", "hl", "sl", "tl", "ie",
+const file = "data.tian"
+
+var paraKeys = []string{"client", "hl", "sl", "tl", "ie",
 	"oe", "multires", "ssel", "tsel", "sc"}
 
+func ReadContent(file string) (string, error) {
+	content, err := ioutil.ReadFile(file)
+	if err != nil {
+		log.Fatal(err)
+		return "", err
+	}
+	return string(content), nil
+}
+
 func main() {
+	content, err := ReadContent(file)
+	if err != nil {
+		return
+	}
+	lines := strings.Split(content, "\n")
+	fmt.Println(lines[1])
+
 	para := make(parameters)
 	para["client"] = "t"
-	para["text"] = "我喜欢你"
 	para["hl"] = "zh-CN"
 	para["sl"] = "zh-CN"
 	para["tl"] = "en"
@@ -54,15 +71,21 @@ func main() {
 		strUrl = strUrl + val + "="
 		strUrl = strUrl + para[val] + "&"
 	}
-	strUrl = strings.TrimRight(strUrl, "&")
-	fmt.Println(strUrl)
+	//strUrl = strings.TrimRight(strUrl, "&")
+	//fmt.Println(strUrl)
+	for _, line := range lines {
+		url := strUrl + "text=" + line
+		resp, err := http.Get(url)
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+		defer resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
 
-	resp, err := http.Get(strUrl)
-	if err != nil {
-		log.Fatal(err)
-		return
+		strBody := string(body)
+		drop := strings.Index(strBody, "]]")
+		strTranslation := strBody[3:drop]
+		fmt.Println(strTranslation)
 	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	fmt.Println(body)
 }
