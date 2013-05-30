@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -46,6 +47,8 @@ func ReadContent(file string) (string, error) {
 	return string(content), nil
 }
 
+const PROXYURL = "http://web-proxy.rose.hp.com:8080"
+
 func main() {
 	content, err := ReadContent(file)
 	if err != nil {
@@ -73,9 +76,15 @@ func main() {
 	}
 	//strUrl = strings.TrimRight(strUrl, "&")
 	//fmt.Println(strUrl)
+	proxy := func(_ *http.Request) (*url.URL, error) {
+		return url.Parse(PROXYURL)
+	}
+	transport := &http.Transport{Proxy: proxy}
+	client := &http.Client{Transport: transport}
+
 	for _, line := range lines {
 		url := strUrl + "text=" + line
-		resp, err := http.Get(url)
+		resp, err := client.Get(url)
 		if err != nil {
 			log.Fatal(err)
 			return
